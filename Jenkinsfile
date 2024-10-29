@@ -1,17 +1,23 @@
 pipeline {
     agent any
 
+    environment {
+        DOCKER_IMAGE_NAME = 'asi-insurance-app'
+        SSH_KEY_PATH = '~/.ssh/id_rsa'            // Path to your private SSH key
+        ANSIBLE_PLAYBOOK = 'deploy-playbook.yml'  // Your Ansible playbook
+    }
+
     stages {
         stage('Clone Repository') {
             steps {
-                git 'https://github.com/your-username/your-repo.git'
+                git 'https://github.com/sanjaykshebbar/ASI-Insurance-DevOps.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build('asi-insurance-app')
+                    docker.build(DOCKER_IMAGE_NAME)
                 }
             }
         }
@@ -21,7 +27,7 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                     script {
                         docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-credentials') {
-                            def appImage = docker.build("asi-insurance-app:${env.BUILD_NUMBER}")
+                            def appImage = docker.build("${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}")
                             appImage.push()
                         }
                     }
@@ -29,10 +35,19 @@ pipeline {
             }
         }
 
+        stage('Run Ansible Playbook') {
+            steps {
+                script {
+                    sh """
+                    ansible-playbook -i localhost, -u sanjayks --private-key ${SSH_KEY_PATH} ${ANSIBLE_PLAYBOOK}
+                    """
+                }
+            }
+        }
+
         stage('Deploy to AWS') {
             steps {
-                // We’ll add deployment steps here once AWS is configured
-                echo 'Deployment stage placeholder'
+                echo 'Deployment stage placeholder' // Placeholder for AWS deployment
             }
         }
     }
@@ -40,7 +55,7 @@ pipeline {
     post {
         always {
             echo 'Cleaning up Docker images'
-            sh 'docker rmi asi-insurance-app'
+            sh "docker rmi ${DOCKER_IMAGE_NAME} || true" // Ignore errors if the image is not found
         }
     }
 }
