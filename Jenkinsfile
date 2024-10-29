@@ -3,21 +3,25 @@ pipeline {
 
     environment {
         DOCKER_IMAGE_NAME = 'asi-insurance-app'
-        SSH_KEY_PATH = '~/.ssh/id_rsa'            // Path to your private SSH key
-        ANSIBLE_PLAYBOOK = 'deploy-playbook.yml'  // Your Ansible playbook
+        SSH_KEY_PATH = '/var/jenkins_home/.ssh/id_rsa' // Update this to your Jenkins SSH key path
+        ANSIBLE_PLAYBOOK = 'deploy-playbook.yml'      // Your Ansible playbook
     }
 
     stages {
         stage('Clone Repository') {
             steps {
-                git 'https://github.com/sanjaykshebbar/ASI-Insurance-DevOps.git'
+                script {
+                    // Clone the repository from the specified branch
+                    git branch: 'main', url: 'https://github.com/sanjaykshebbar/ASI-Insurance-DevOps.git'
+                }
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build(DOCKER_IMAGE_NAME)
+                    // Build the Docker image
+                    def appImage = docker.build(DOCKER_IMAGE_NAME)
                 }
             }
         }
@@ -27,8 +31,10 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                     script {
                         docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-credentials') {
-                            def appImage = docker.build("${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}")
-                            appImage.push()
+                            // Tag and push the Docker image
+                            def appImage = docker.image(DOCKER_IMAGE_NAME)
+                            appImage.tag("${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}")
+                            appImage.push("${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}")
                         }
                     }
                 }
@@ -38,6 +44,7 @@ pipeline {
         stage('Run Ansible Playbook') {
             steps {
                 script {
+                    // Execute the Ansible playbook
                     sh """
                     ansible-playbook -i localhost, -u sanjayks --private-key ${SSH_KEY_PATH} ${ANSIBLE_PLAYBOOK}
                     """
@@ -55,7 +62,10 @@ pipeline {
     post {
         always {
             echo 'Cleaning up Docker images'
-            sh "docker rmi ${DOCKER_IMAGE_NAME} || true" // Ignore errors if the image is not found
+            // Remove the built image
+            sh "docker rmi ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} || true" // Ignore errors if the image is not found
+            // Optionally clean up dangling images
+            sh "docker rmi \$(docker images -f 'dangling=true' -q) || true"
         }
     }
 }
