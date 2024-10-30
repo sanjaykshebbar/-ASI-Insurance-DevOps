@@ -1,0 +1,22 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Update the apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Install Python3 and pip
+      apt:
+        name: python3-pip
+        state: present
+
+    - name: Install Ansible
+      pip:
+        name: ansible
+        state: present
