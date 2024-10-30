@@ -1,6 +1,6 @@
 ---
 - name: Deploy ASI Insurance Application
-  hosts: webserver
+  hosts: all
   become: yes
   tasks:
 
