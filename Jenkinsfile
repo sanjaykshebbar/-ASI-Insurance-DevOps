@@ -3,13 +3,13 @@ pipeline {
 
     stages {
         stage('Clone Repository') {
-            steps {
-                script {
-                    echo 'Cloning the repository from GitHub...'
-                    git 'https://github.com/sanjaykshebbar/ASI-Insurance-DevOps.git'
-                }
-            }
+    steps {
+        script {
+            echo 'Cloning the repository from GitHub...'
+            git branch: 'main', url: 'https://github.com/sanjaykshebbar/ASI-Insurance-DevOps.git'
         }
+    }
+}
 
         stage('Build Docker Image') {
             steps {
