@@ -1,10 +1,9 @@
 ---
-- name: Deploy ASI Insurance Application
-  hosts: webserver
+- name: Deploy Dockerized Application to EC2
+  hosts: all
   become: yes
   tasks:
-
-    - name: Update apt packages
+    - name: Update apt package index
       apt:
         update_cache: yes
 
@@ -13,15 +12,23 @@
         name: docker.io
         state: present
 
-    - name: Pull the application image from Docker Hub
+    - name: Ensure Docker is running
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Pull Docker image from Docker Hub
       docker_image:
-        name: asi-insurance-app:latest
+        name: asi-insurance-app
+        tag: "{{ lookup('env', 'BUILD_NUMBER') }}"
         source: pull
 
-    - name: Run the Docker container
+    - name: Run Docker container
       docker_container:
         name: asi-insurance-container
-        image: asi-insurance-app:latest
+        image: asi-insurance-app:{{ lookup('env', 'BUILD_NUMBER') }}
         state: started
-        ports:
-          - "80:3000"
+        restart_policy: unless-stopped
+        published_ports:
+          - "80:80"  # Adjust as needed for your application
