@@ -1,7 +1,7 @@
 ---
 - name: Deploy ASI Insurance Application
   hosts: localhost
-  become: yes
+  become: true
   tasks:
 
     - name: Update apt packages
