@@ -1,6 +1,6 @@
 ---
 - name: Deploy ASI Insurance Application
-  hosts: localhost
+  hosts: ec2_instances
   become: true
   tasks:
 
@@ -15,13 +15,14 @@
 
     - name: Pull the application image from Docker Hub
       docker_image:
-        name: asi-insurance-app:latest
+        name: sanjaykshebbar/asi-insurance-app:latest
         source: pull
 
     - name: Run the Docker container
       docker_container:
         name: asi-insurance-container
-        image: asi-insurance-app:latest
+        image: sanjaykshebbar/asi-insurance-app:latest
         state: started
         ports:
           - "80:3000"
+
