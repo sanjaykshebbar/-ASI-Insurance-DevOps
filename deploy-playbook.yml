@@ -1,0 +1,33 @@
+---
+- name: Deploy ASI Insurance Application
+  hosts: webserver
+  become: true
+  tasks:
+
+    - name: Update apt packages
+      apt:
+        update_cache: yes
+
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Add user to Docker group
+      user:
+        name: admin  # Replace with the actual username
+        group: docker
+        append: yes
+
+    - name: Pull the application image from Docker Hub
+      docker_image:
+        name: sanjaykshebbar/asi-insurance-app:latest
+        source: pull
+
+    - name: Run the Docker container
+      docker_container:
+        name: asi-insurance-container
+        image: sanjaykshebbar/asi-insurance-app:latest
+        state: started
+        ports:
+          - "80:3000"
