@@ -2,11 +2,10 @@ pipeline {
     agent any
 
     environment {
-        // Replace with your credentials IDs
         GIT_CREDENTIALS_ID = 'github-credentials'
         DOCKER_CREDENTIALS_ID = 'docker-hub-credentials'
         AWS_CREDENTIALS_ID = 'aws-credentials'
-        AWS_REGION = 'us-east-1' // Your AWS region
+        AWS_REGION = 'us-east-1'
     }
 
     stages {
@@ -35,12 +34,10 @@ pipeline {
                     secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                 ]]) {
                     sh '''
-                    # Configure AWS CLI with credentials and default region
                     aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
                     aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
                     aws configure set region $AWS_REGION
                     
-                    # Verify the AWS setup by listing S3 buckets (for example)
                     aws s3 ls
                     '''
                 }
@@ -68,7 +65,6 @@ pipeline {
 
         stage('Deploy with Ansible') {
             steps {
-                // Run Ansible playbook to deploy Docker container on AWS EC2 instance
                 sh '''
                 ansible-playbook -i hosts deploy-playbook.yml
                 '''
@@ -78,7 +74,7 @@ pipeline {
 
     post {
         always {
-            cleanWs() // Clean workspace after the build
+            cleanWs() 
         }
         success {
             echo 'Pipeline completed successfully.'
