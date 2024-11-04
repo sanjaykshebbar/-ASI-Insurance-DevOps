@@ -16,22 +16,11 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
-            steps {
-                script {
-                    // Use credentials to run commands requiring sudo
-                    withCredentials([usernamePassword(credentialsId: SUDO_CREDENTIALS_ID, usernameVariable: 'SUDO_USER', passwordVariable: 'SUDO_PASS')]) {
-                        sh '''
-                        echo "$SUDO_PASS" | sudo -S ./install_dependencies.sh
-                        '''
-                    }
-                }
-            }
-        }
+        // Removed the Install Dependencies stage as per your request
 
         stage('Setup AWS Credentials') {
             steps {
-                withCredentials([[
+                withCredentials([[ 
                     $class: 'AmazonWebServicesCredentialsBinding',
                     credentialsId: AWS_CREDENTIALS_ID,
                     accessKeyVariable: 'AWS_ACCESS_KEY_ID',
