@@ -6,6 +6,7 @@ pipeline {
         DOCKER_CREDENTIALS_ID = 'docker-hub-credentials'
         AWS_CREDENTIALS_ID = 'aws-credentials'
         AWS_REGION = 'us-east-1'
+        SUDO_CREDENTIALS_ID = 'sudo-credentials' // ID of the sudo credential you created
     }
 
     stages {
@@ -17,16 +18,14 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh '''
-                # Set locale for UTF-8
-                export LANG=en_US.UTF-8
-                export LANGUAGE=en_US.UTF-8
-                export LC_ALL=en_US.UTF-8
-
-                # Install dependencies like Node.js, AWS CLI, etc.
-                sudo apt-get update
-                sudo apt-get install -y nodejs npm awscli
-                '''
+                script {
+                    // Use credentials to run commands requiring sudo
+                    withCredentials([usernamePassword(credentialsId: SUDO_CREDENTIALS_ID, usernameVariable: 'SUDO_USER', passwordVariable: 'SUDO_PASS')]) {
+                        sh '''
+                        echo "$SUDO_PASS" | sudo -S ./install_dependencies.sh
+                        '''
+                    }
+                }
             }
         }
 
