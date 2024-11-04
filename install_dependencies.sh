@@ -10,6 +10,6 @@ echo "Updating package list..."
 sudo apt-get update
 
 echo "Installing Node.js, npm, and AWS CLI..."
-sudo apt-get install -y nodejs npm awscli
+ sudo apt-get install -y --no-install-recommends nodejs npm awscli
 
 echo "Dependencies installed successfully."
