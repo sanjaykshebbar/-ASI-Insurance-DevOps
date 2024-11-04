@@ -1,40 +1,67 @@
 pipeline {
     agent any
+
     environment {
-        // These environment variables are populated using Jenkins credentials
-        AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
-        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
-        AWS_SESSION_TOKEN = credentials('aws-session-token') // Optional if using temporary token
+        DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials')
+        GIT_CREDENTIALS = credentials('github-credentials')
+        AWS_SSH_KEY = credentials('aws-ssh-key')
     }
+
     stages {
         stage('Checkout Code') {
             steps {
-                git url: 'https://github.com/sanjaykshebbar/ASI-Insurance-DevOps.git'
+                git credentialsId: 'github-credentials', url: 'https://github.com/sanjaykshebbar/-ASI-Insurance-DevOps.git', branch: 'main'
             }
         }
 
-        stage('Terraform Init & Apply') {
-            steps {
-                // Initialize Terraform
-                sh 'terraform init'
-
-                // Apply Terraform with automatic approval
-                sh 'terraform apply -auto-approve'
-            }
-        }
-
-        stage('Run Ansible Playbook') {
+        stage('Build Docker Image') {
             steps {
                 script {
-                    // Generate a dynamic inventory file using the Terraform output
-                    def publicIp = sh(script: 'terraform output -raw instance_ip', returnStdout: true).trim()
-                    writeFile file: 'hosts', text: "[ec2_instances]\n${publicIp} ansible_ssh_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa\n"
+                    dockerImage = docker.build("sanjaykshebbar/asi-insurance-app:latest")
+                }
+            }
+        }
 
-                    // Execute the Ansible playbook
-                    sh 'ansible-playbook -i hosts deploy-playbook.yml'
+        stage('Push Docker Image to Docker Hub') {
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+                        dockerImage.push('latest')
+                    }
+                }
+            }
+        }
+
+        stage('Terraform Apply: Create EC2') {
+            steps {
+                dir('terraform-ec2') {
+                    script {
+                        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
+                            sh 'terraform init'
+                            sh 'terraform apply -auto-approve'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Ansible: Deploy to EC2') {
+            steps {
+                dir('ansible') {
+                    script {
+                        def instanceIp = sh(returnStdout: true, script: 'terraform output -raw ec2_instance_public_ip').trim()
+                        
+                        // Update Ansible hosts file dynamically
+                        writeFile file: 'hosts', text: """
+                        [ec2]
+                        ${instanceIp} ansible_user=ec2-user ansible_ssh_private_key_file=${AWS_SSH_KEY} ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+                        """
+
+                        // Run Ansible playbook
+                        sh 'ansible-playbook -i hosts deploy-playbook.yml'
+                    }
                 }
             }
         }
     }
 }
-

@@ -1,25 +1,20 @@
 ---
-- name: Deploy ASI Insurance Application
-  hosts: webserver
-  become: true
+- hosts: ec2
+  become: yes
   tasks:
-
-    - name: Update apt packages
+    - name: Update apt and install Docker
       apt:
         update_cache: yes
-
-    - name: Install Docker
-      apt:
         name: docker.io
         state: present
 
-    - name: Add user to Docker group
+    - name: Add user to the docker group
       user:
-        name: admin  # Replace with the actual username
-        group: docker
+        name: "{{ ansible_user }}"
+        groups: docker
         append: yes
 
-    - name: Pull the application image from Docker Hub
+    - name: Pull the Docker image from Docker Hub
       docker_image:
         name: sanjaykshebbar/asi-insurance-app:latest
         source: pull
@@ -28,6 +23,6 @@
       docker_container:
         name: asi-insurance-container
         image: sanjaykshebbar/asi-insurance-app:latest
-        state: started
         ports:
-          - "80:3000"
+          - "80:80"
+        state: started

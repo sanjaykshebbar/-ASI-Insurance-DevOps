@@ -1,0 +1,3 @@
+AWS_ACCESS_KEY   = "AKIA2RS36HQVDMO62Z5E"
+AWS_SECRET_KEY   = "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"
+AWS_KEY_PAIR_NAME = "DevOps-Capstone-Project"
