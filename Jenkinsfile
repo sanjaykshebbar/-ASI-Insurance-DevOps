@@ -18,6 +18,11 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh '''
+                # Set locale for UTF-8
+                export LANG=en_US.UTF-8
+                export LANGUAGE=en_US.UTF-8
+                export LC_ALL=en_US.UTF-8
+
                 # Install dependencies like Node.js, AWS CLI, etc.
                 sudo apt-get update
                 sudo apt-get install -y nodejs npm awscli
@@ -66,6 +71,11 @@ pipeline {
         stage('Deploy with Ansible') {
             steps {
                 sh '''
+                # Set locale for UTF-8 for Ansible
+                export LANG=en_US.UTF-8
+                export LANGUAGE=en_US.UTF-8
+                export LC_ALL=en_US.UTF-8
+                
                 ansible-playbook -i hosts deploy-playbook.yml
                 '''
             }
