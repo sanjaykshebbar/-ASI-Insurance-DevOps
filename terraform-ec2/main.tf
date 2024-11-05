@@ -50,6 +50,10 @@ resource "aws_security_group" "jenkins_sg" {
   }
 }
 
+output "instance_public_ip" {
+  value = aws_instance.jenkins_instance.public_ip
+}
+
 variable "AWS_KEY_PAIR_NAME" {
   type        = string
   description = "Name of the existing AWS key pair"
