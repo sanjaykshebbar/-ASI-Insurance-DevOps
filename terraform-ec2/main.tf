@@ -1,11 +1,9 @@
 provider "aws" {
-  region     = "us-east-1"   # Update as per your region
-  access_key = var.AWS_ACCESS_KEY
-  secret_key = var.AWS_SECRET_KEY
+  region = "us-east-1"   # Update as per your region
 }
 
 resource "aws_instance" "jenkins_instance" {
-  ami           = "ami-08e4e35cccc6189f4"   # Amazon Linux 2 AMI ID (you can change this to another one)
+  ami           = "ami-08e4e35cccc6189f4"   # Amazon Linux 2 AMI ID
   instance_type = "t2.micro"
   key_name      = var.AWS_KEY_PAIR_NAME      # Ensure this key pair exists
 
@@ -13,8 +11,17 @@ resource "aws_instance" "jenkins_instance" {
     Name = "Jenkins-EC2"
   }
 
-  # Add a security group that allows SSH and HTTP
-  security_groups = [aws_security_group.jenkins_sg.name]
+  # Associate security group
+  vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
+
+  # Add user data to install Docker automatically on instance launch
+  user_data = <<-EOF
+              #!/bin/bash
+              sudo yum update -y
+              sudo amazon-linux-extras install docker -y
+              sudo service docker start
+              sudo usermod -aG docker ec2-user
+              EOF
 }
 
 resource "aws_security_group" "jenkins_sg" {
@@ -25,14 +32,14 @@ resource "aws_security_group" "jenkins_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0"]  # Consider limiting this to your own IP
   }
 
   ingress {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0"]  # Consider limiting this to your own IP
   }
 
   egress {
@@ -43,7 +50,17 @@ resource "aws_security_group" "jenkins_sg" {
   }
 }
 
-output "instance_public_ip" {
-  description = "The public IP of the EC2 instance"
-  value       = aws_instance.jenkins_instance.public_ip
+variable "AWS_ACCESS_KEY" {
+  type        = string
+  description = "AWS Access Key"
+}
+
+variable "AWS_SECRET_KEY" {
+  type        = string
+  description = "AWS Secret Key"
+}
+
+variable "AWS_KEY_PAIR_NAME" {
+  type        = string
+  description = "Name of the existing AWS key pair"
 }
