@@ -8,7 +8,3 @@ variable "AWS_SECRET_KEY" {
   description = "AWS Secret Key"
 }
 
-variable "AWS_KEY_PAIR_NAME" {
-  type        = string
-  description = "Name of the AWS Key Pair"
-}

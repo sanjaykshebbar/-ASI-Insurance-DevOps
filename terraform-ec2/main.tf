@@ -1,11 +1,11 @@
 provider "aws" {
-  region = "us-east-1"   # Update as per your region
+  region = "us-east-1"  # Update as per your region
 }
 
 resource "aws_instance" "jenkins_instance" {
   ami           = "ami-08e4e35cccc6189f4"   # Amazon Linux 2 AMI ID
   instance_type = "t2.micro"
-  key_name      = var.AWS_KEY_PAIR_NAME      # Ensure this key pair exists
+  key_name      = var.AWS_KEY_PAIR_NAME     # Ensure this key pair exists
 
   tags = {
     Name = "Jenkins-EC2"
@@ -48,16 +48,6 @@ resource "aws_security_group" "jenkins_sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-}
-
-variable "AWS_ACCESS_KEY" {
-  type        = string
-  description = "AWS Access Key"
-}
-
-variable "AWS_SECRET_KEY" {
-  type        = string
-  description = "AWS Secret Key"
 }
 
 variable "AWS_KEY_PAIR_NAME" {
