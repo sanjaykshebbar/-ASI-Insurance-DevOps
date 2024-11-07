@@ -11,7 +11,7 @@ COPY package*.json ./
 RUN npm install
 
 # Copy everything from the local src directory to the container's src directory
-COPY src/ src/
+COPY static-site/ src/
 
 # Expose port 3000 for the app
 EXPOSE 3000
